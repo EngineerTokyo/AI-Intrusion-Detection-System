@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+env/
+.venv/
+
+uploads/
+CyberSecurity_Report.pdf
+
+*.db
+*.sqlite3
+
+.DS_Store
+.vscode/

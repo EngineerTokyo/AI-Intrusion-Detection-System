@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Threat Intelligence Dashboard</title>
+
+    <style>
+        *{
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+        }
+
+        body{
+            background:#03060a;
+            color:#d7ffe8;
+            font-family:Consolas, "Courier New", monospace;
+        }
+
+        body::before{
+            content:"";
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:
+                linear-gradient(rgba(0,255,120,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,120,0.04) 1px, transparent 1px);
+            background-size:30px 30px;
+            pointer-events:none;
+            z-index:0;
+        }
+
+        .sidebar{
+            position:fixed;
+            top:0;
+            left:0;
+            width:250px;
+            height:100vh;
+            background:linear-gradient(180deg, #08110f, #020403);
+            border-right:1px solid #14ff88;
+            box-shadow:0 0 25px rgba(20,255,136,0.15);
+            padding:24px 18px;
+            overflow:auto;
+            z-index:10;
+        }
+
+        .brand{
+            font-size:24px;
+            font-weight:bold;
+            color:#14ff88;
+            text-shadow:0 0 12px rgba(20,255,136,0.8);
+            margin-bottom:8px;
+        }
+
+        .brand-sub{
+            font-size:12px;
+            color:#7fffd4;
+            margin-bottom:25px;
+            line-height:1.5;
+        }
+
+        .side-tag{
+            display:inline-block;
+            padding:8px 12px;
+            border:1px solid #14ff88;
+            color:#14ff88;
+            border-radius:8px;
+            margin-bottom:22px;
+            font-size:12px;
+            box-shadow:0 0 12px rgba(20,255,136,0.15);
+        }
+
+        .sidebar a{
+            display:block;
+            text-decoration:none;
+            color:#c8ffe3;
+            padding:12px 14px;
+            border:1px solid rgba(20,255,136,0.16);
+            border-radius:10px;
+            margin-bottom:10px;
+            transition:0.25s ease;
+            background:rgba(0,255,120,0.03);
+        }
+
+        .sidebar a:hover{
+            background:#14ff88;
+            color:#02150c;
+            box-shadow:0 0 18px rgba(20,255,136,0.4);
+            transform:translateX(4px);
+        }
+
+        .main{
+            margin-left:250px;
+            padding:26px;
+            position:relative;
+            z-index:1;
+        }
+
+        .topbar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:20px;
+            margin-bottom:24px;
+            flex-wrap:wrap;
+        }
+
+        .top-title h1{
+            color:#14ff88;
+            font-size:30px;
+            text-shadow:0 0 14px rgba(20,255,136,0.65);
+            margin-bottom:6px;
+        }
+
+        .top-title p{
+            color:#9fffd2;
+            font-size:14px;
+        }
+
+        .top-status{
+            display:flex;
+            gap:15px;
+            flex-wrap:wrap;
+        }
+
+        .status-chip{
+            padding:12px 18px;
+            border-radius:12px;
+            border:1px solid #14ff88;
+            background:#06120d;
+            color:#d9ffe9;
+            box-shadow:0 0 14px rgba(20,255,136,0.15);
+            min-width:180px;
+        }
+
+        .status-chip strong{
+            color:#14ff88;
+        }
+
+        .status-stable{
+            color:#6CFF7D;
+            font-weight:bold;
+        }
+
+        .status-warning{
+            color:#ffb74d;
+            font-weight:bold;
+        }
+
+        .status-critical{
+            color:#ff4d6d;
+            font-weight:bold;
+        }
+
+        .card{
+            background:rgba(7, 18, 14, 0.92);
+            border:1px solid rgba(20,255,136,0.25);
+            border-radius:18px;
+            padding:24px;
+            margin-bottom:22px;
+            box-shadow:
+                0 0 22px rgba(20,255,136,0.07),
+                inset 0 0 14px rgba(20,255,136,0.03);
+        }
+
+        .card h2{
+            color:#14ff88;
+            margin-bottom:14px;
+            text-shadow:0 0 10px rgba(20,255,136,0.45);
+        }
+
+        .card p{
+            line-height:1.7;
+            color:#d4ffe8;
+        }
+
+        .danger-card{
+            border:1px solid rgba(255, 77, 109, 0.6);
+            box-shadow:0 0 22px rgba(255,77,109,0.18);
+        }
+
+        .research-card{
+            border:1px solid rgba(86,204,242,0.6);
+            box-shadow:0 0 22px rgba(86,204,242,0.18);
+        }
+
+        .grid-4{
+            display:grid;
+            grid-template-columns:repeat(4, 1fr);
+            gap:16px;
+        }
+
+        .grid-3{
+            display:grid;
+            grid-template-columns:repeat(3, 1fr);
+            gap:16px;
+        }
+
+        .grid-2{
+            display:grid;
+            grid-template-columns:repeat(2, 1fr);
+            gap:18px;
+        }
+
+        .mini-card{
+            background:#06120d;
+            border:1px solid rgba(20,255,136,0.18);
+            border-radius:14px;
+            padding:18px;
+            text-align:center;
+            box-shadow:0 0 14px rgba(20,255,136,0.08);
+        }
+
+        .mini-card h3{
+            font-size:15px;
+            color:#95ffd0;
+            margin-bottom:10px;
+        }
+
+        .metric{
+            font-size:30px;
+            font-weight:bold;
+            color:#14ff88;
+            text-shadow:0 0 10px rgba(20,255,136,0.55);
+        }
+
+        .metric-red{
+            color:#ff4d6d;
+            text-shadow:0 0 10px rgba(255,77,109,0.55);
+        }
+
+        .metric-orange{
+            color:#ffb347;
+            text-shadow:0 0 10px rgba(255,179,71,0.55);
+        }
+
+        .metric-yellow{
+            color:#ffe066;
+            text-shadow:0 0 10px rgba(255,224,102,0.55);
+        }
+
+        .metric-blue{
+            color:#56ccf2;
+            text-shadow:0 0 10px rgba(86,204,242,0.55);
+        }
+
+        .blink-alert{
+            margin-top:18px;
+            background:#4b0915;
+            color:#ffdce3;
+            border:1px solid #ff4d6d;
+            padding:16px;
+            border-radius:14px;
+            font-size:20px;
+            text-align:center;
+            font-weight:bold;
+            animation:blink 1s infinite;
+            box-shadow:0 0 20px rgba(255,77,109,0.28);
+        }
+
+        @keyframes blink{
+            0%{opacity:1;}
+            50%{opacity:0.45;}
+            100%{opacity:1;}
+        }
+
+        .btn{
+            background:#14ff88;
+            color:#05140e;
+            border:none;
+            padding:14px 24px;
+            font-weight:bold;
+            border-radius:12px;
+            cursor:pointer;
+            font-size:15px;
+            box-shadow:0 0 16px rgba(20,255,136,0.25);
+            transition:0.25s ease;
+            margin-top:12px;
+        }
+
+        .btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 22px rgba(20,255,136,0.45);
+            background:#76ffb7;
+        }
+
+        .file-input{
+            width:100%;
+            padding:14px;
+            background:#06120d;
+            color:#d6ffe9;
+            border:1px solid rgba(20,255,136,0.4);
+            border-radius:12px;
+            margin:14px 0 8px 0;
+        }
+
+        .result-box{
+            margin-top:18px;
+            padding:18px;
+            border-left:4px solid #14ff88;
+            background:#071611;
+            border-radius:10px;
+            line-height:1.8;
+        }
+
+        .upload-success{
+            margin-top:18px;
+            padding:18px;
+            border-left:4px solid #14ff88;
+            background:#071611;
+            border-radius:10px;
+            line-height:1.8;
+        }
+
+        .upload-error{
+            margin-top:18px;
+            padding:18px;
+            border-left:4px solid #ff4d6d;
+            background:#16080b;
+            border-radius:10px;
+            line-height:1.8;
+            color:#ffd9e0;
+        }
+
+        .safe{
+            color:#66ff99;
+            font-weight:bold;
+        }
+
+        .alert{
+            color:#ff5f7a;
+            font-weight:bold;
+        }
+
+        .warning{
+            color:#ffb347;
+            font-weight:bold;
+        }
+
+        .medium{
+            color:#ffe066;
+            font-weight:bold;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:16px;
+            overflow:hidden;
+            border-radius:12px;
+        }
+
+        table th{
+            background:#0d261d;
+            color:#14ff88;
+            border:1px solid rgba(20,255,136,0.18);
+            padding:14px 10px;
+            font-size:14px;
+        }
+
+        table td{
+            padding:12px 10px;
+            border:1px solid rgba(20,255,136,0.10);
+            text-align:center;
+            font-size:13px;
+            color:#dcffec;
+        }
+
+        table tr:nth-child(even){
+            background:rgba(20,255,136,0.025);
+        }
+
+        table tr:hover{
+            background:rgba(20,255,136,0.07);
+        }
+
+        .table-wrap{
+            overflow-x:auto;
+        }
+
+        .chart-box{
+            background:#07130e;
+            border:1px solid rgba(20,255,136,0.18);
+            border-radius:14px;
+            padding:16px;
+        }
+
+        .chart-box h3{
+            color:#91ffd1;
+            margin-bottom:12px;
+        }
+
+        .chart-box img{
+            width:100%;
+            border-radius:12px;
+            background:#ffffff;
+            padding:10px;
+        }
+
+        .footer{
+            margin-top:20px;
+            text-align:center;
+            color:#7fbf9d;
+            font-size:13px;
+            padding:20px 0;
+        }
+
+        .section-id{
+            color:#78ffbd;
+            font-size:12px;
+            margin-bottom:8px;
+            letter-spacing:1px;
+        }
+
+        @media screen and (max-width: 1100px){
+            .grid-4{
+                grid-template-columns:repeat(2, 1fr);
+            }
+
+            .grid-3{
+                grid-template-columns:1fr;
+            }
+
+            .grid-2{
+                grid-template-columns:1fr;
+            }
+        }
+
+        @media screen and (max-width: 900px){
+            .sidebar{
+                position:relative;
+                width:100%;
+                height:auto;
+            }
+
+            .main{
+                margin-left:0;
+            }
+
+            .grid-4{
+                grid-template-columns:1fr;
+            }
+
+            .topbar{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+
+        <div class="brand">CYBER//CORE</div>
+        <div class="brand-sub">
+            Real-Time AI Intrusion Detection<br>
+            Threat Intelligence Dashboard
+        </div>
+
+        <div class="side-tag">[ MONITOR MODE ACTIVE ]</div>
+
+        <a href="#alert-center">Alert Center</a>
+        <a href="#overview">System Overview</a>
+        <a href="#stats">Dataset Statistics</a>
+        <a href="#model-engine">AI Threat Engine</a>
+        <a href="#research-lab">ML Research Lab</a>
+        <a href="#upload-analyzer">Upload Analyzer</a>
+        <a href="#live-sim">Live Traffic Simulator</a>
+        <a href="#suspicious-panel">Suspicious IP Intelligence</a>
+        <a href="#packet-monitor">Real Packet Monitor</a>
+        <a href="#analytics">Security Analytics</a>
+        <a href="#history">Detection History</a>
+        <a href="#report">Forensic Report</a>
+
+    </div>
+
+    <div class="main">
+
+        <div class="topbar">
+
+            <div class="top-title">
+                <h1>Threat Intelligence Command Center</h1>
+                <p>AI + Packet Sniffing + Behavioral Detection + ML Evaluation</p>
+            </div>
+
+            <div class="top-status">
+
+                <div class="status-chip">
+                    <strong>System Health:</strong><br>
+                    <span class="
+                        {% if system_health == 'CRITICAL' %}
+                            status-critical
+                        {% elif system_health == 'WARNING' %}
+                            status-warning
+                        {% else %}
+                            status-stable
+                        {% endif %}
+                    ">
+                        {{ system_health }}
+                    </span>
+                </div>
+
+                <div class="status-chip">
+                    <strong>Best ML Model:</strong><br>
+                    <span class="status-stable">{{ best_model_name }}</span>
+                </div>
+
+                <div class="status-chip">
+                    <strong>Live Time:</strong><br>
+                    <span id="liveClock">--:--:--</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ALERT CENTER -->
+        <div class="card danger-card" id="alert-center">
+
+            <div class="section-id">[ SECTION // ALERT CENTER ]</div>
+            <h2>Live Threat Alert Center</h2>
+
+            <div class="grid-4">
+
+                <div class="mini-card">
+                    <h3>Critical Alerts</h3>
+                    <div class="metric metric-red">{{ critical_alerts }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>High Alerts</h3>
+                    <div class="metric metric-orange">{{ high_alerts }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Medium Alerts</h3>
+                    <div class="metric metric-yellow">{{ medium_alerts }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Total Packets</h3>
+                    <div class="metric metric-blue">{{ total_captured_packets }}</div>
+                </div>
+
+            </div>
+
+            {% if critical_alerts > 0 %}
+                <div class="blink-alert">
+                    ⚠ CRITICAL NETWORK THREAT DETECTED // POSSIBLE DDoS OR AGGRESSIVE NETWORK BEHAVIOR ⚠
+                </div>
+            {% endif %}
+
+        </div>
+
+        <!-- OVERVIEW -->
+        <div class="card" id="overview">
+            <div class="section-id">[ SECTION // OVERVIEW ]</div>
+            <h2>System Overview</h2>
+            <p>
+                This project is a real-time AI-based Intrusion Detection and Threat Intelligence System.
+                It trains machine learning models using the NSL-KDD dataset, compares multiple algorithms,
+                captures real packets using Scapy, analyzes packet behavior, detects suspicious traffic patterns,
+                stores detection logs in SQLite, analyzes uploaded traffic files, and generates forensic PDF reports.
+            </p>
+        </div>
+
+        <!-- LIVE STATUS -->
+        <div class="card">
+            <div class="section-id">[ SECTION // LIVE STATUS ]</div>
+            <h2>Monitoring Overview</h2>
+
+            <div class="grid-4">
+
+                <div class="mini-card">
+                    <h3>Monitored IPs</h3>
+                    <div class="metric">{{ monitored_ips }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Low Alerts</h3>
+                    <div class="metric">{{ low_alerts }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Suspicious IPs</h3>
+                    <div class="metric metric-orange">{{ suspicious_ips|length }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Main Model Accuracy</h3>
+                    <div class="metric">{{ accuracy }}%</div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- DATASET -->
+        <div class="card" id="stats">
+            <div class="section-id">[ SECTION // DATASET ]</div>
+            <h2>Dataset Statistics</h2>
+
+            <div class="grid-3">
+
+                <div class="mini-card">
+                    <h3>Total Records</h3>
+                    <div class="metric">{{ total_records }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Attack Records</h3>
+                    <div class="metric metric-red">{{ total_attacks }}</div>
+                </div>
+
+                <div class="mini-card">
+                    <h3>Normal Records</h3>
+                    <div class="metric">{{ normal_records }}</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AI MODEL -->
+        <div class="card" id="model-engine">
+            <div class="section-id">[ SECTION // AI ENGINE ]</div>
+            <h2>AI Threat Detection Engine</h2>
+            <p>
+                This engine uses a Random Forest model trained on the NSL-KDD intrusion detection dataset
+                to classify traffic as normal or malicious.
+            </p>
+
+            <form method="POST">
+                <input type="hidden" name="action" value="predict_sample">
+                <button class="btn" type="submit">Analyze Network Threat</button>
+            </form>
+
+            {% if result %}
+                <div class="result-box">
+                    <p><strong>Threat Type:</strong> {{ result }}</p>
+                    <p><strong>Threat Severity:</strong> {{ severity }}</p>
+                    <p>
+                        <strong>System Status:</strong>
+                        <span class="{% if status == 'SAFE' %}safe{% else %}alert{% endif %}">
+                            {{ status }}
+                        </span>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ML RESEARCH LAB -->
+        <div class="card research-card" id="research-lab">
+            <div class="section-id">[ SECTION // MACHINE LEARNING RESEARCH LAB ]</div>
+            <h2>Model Comparison and Evaluation</h2>
+            <p>
+                This section compares multiple machine learning algorithms for binary intrusion detection
+                using normal vs attack classification. It improves the academic and research strength of the project.
+            </p>
+
+            <div class="grid-4">
+
+                {% for item in model_results %}
+                <div class="mini-card">
+                    <h3>{{ item.name }}</h3>
+                    <div class="metric metric-blue">{{ item.accuracy }}%</div>
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <div class="result-box">
+                <p><strong>Best Performing Model:</strong> {{ best_model_name }}</p>
+                <p><strong>Best Model Accuracy:</strong> {{ best_model_accuracy }}%</p>
+                <p><strong>Binary Classification Accuracy:</strong> {{ overall_accuracy_binary }}%</p>
+            </div>
+
+            <div class="grid-2" style="margin-top:20px;">
+
+                <div class="chart-box">
+                    <h3>Model Accuracy Comparison</h3>
+                    <img src="{{ url_for('static', filename='model_comparison.png') }}">
+                </div>
+
+                <div class="chart-box">
+                    <h3>Confusion Matrix</h3>
+                    <img src="{{ url_for('static', filename='confusion_matrix.png') }}">
+                </div>
+
+            </div>
+
+            <h2 style="margin-top:25px;">Classification Report</h2>
+
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Class</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1-Score</th>
+                        <th>Support</th>
+                    </tr>
+
+                    {% for metric in classification_metrics %}
+                    <tr>
+                        <td>{{ metric.class }}</td>
+                        <td>{{ metric.precision }}%</td>
+                        <td>{{ metric.recall }}%</td>
+                        <td>{{ metric.f1_score }}%</td>
+                        <td>{{ metric.support }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </div>
+
+        <!-- UPLOAD ANALYZER -->
+        <div class="card" id="upload-analyzer">
+            <div class="section-id">[ SECTION // FILE ANALYZER ]</div>
+            <h2>CSV / TXT Traffic File Analyzer</h2>
+            <p>
+                Upload a traffic file in NSL-KDD style format. The AI model will analyze uploaded records
+                and predict the dominant traffic threat type.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_file">
+                <input class="file-input" type="file" name="traffic_file" accept=".csv,.txt" required>
+                <button class="btn" type="submit">Analyze Uploaded Traffic</button>
+            </form>
+
+            {% if upload_result %}
+
+                {% if upload_result.success %}
+                    <div class="upload-success">
+                        <p><strong>File Name:</strong> {{ upload_result.filename }}</p>
+                        <p><strong>Total Uploaded Records:</strong> {{ upload_result.total_records }}</p>
+                        <p><strong>Predicted Threat:</strong> {{ upload_result.predicted_threat }}</p>
+                        <p><strong>Normal Predictions:</strong> {{ upload_result.normal_predictions }}</p>
+                        <p><strong>Attack Predictions:</strong> {{ upload_result.attack_predictions }}</p>
+                        <p><strong>Severity:</strong> {{ upload_result.severity }}</p>
+                        <p>
+                            <strong>Status:</strong>
+                            <span class="{% if upload_result.status == 'SAFE' %}safe{% else %}alert{% endif %}">
+                                {{ upload_result.status }}
+                            </span>
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="upload-error">
+                        <p><strong>File Name:</strong> {{ upload_result.filename }}</p>
+                        <p><strong>Error:</strong> {{ upload_result.message }}</p>
+                    </div>
+                {% endif %}
+
+            {% endif %}
+        </div>
+
+        <!-- LIVE TRAFFIC -->
+        <div class="card" id="live-sim">
+            <div class="section-id">[ SECTION // TRAFFIC SIMULATOR ]</div>
+            <h2>Live Traffic Simulator</h2>
+            <p>
+                This module simulates live network activity to visually demonstrate monitoring behavior
+                and support FYP presentation flow.
+            </p>
+
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Source IP</th>
+                        <th>Protocol</th>
+                        <th>Activity</th>
+                        <th>Status</th>
+                    </tr>
+
+                    {% for traffic in live_traffic %}
+                    <tr>
+                        <td>{{ traffic.ip }}</td>
+                        <td>{{ traffic.protocol }}</td>
+                        <td>{{ traffic.activity }}</td>
+                        <td class="{% if traffic.status == 'SAFE' %}safe{% else %}alert{% endif %}">
+                            {{ traffic.status }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <!-- SUSPICIOUS IP PANEL -->
+        <div class="card" id="suspicious-panel">
+            <div class="section-id">[ SECTION // SUSPICIOUS IP INTELLIGENCE ]</div>
+            <h2>Suspicious IP Intelligence Panel</h2>
+            <p>
+                This panel tracks IP addresses showing abnormal packet behavior such as packet flooding,
+                traffic bursts, and possible port scanning.
+            </p>
+
+            {% if suspicious_ips %}
+                <div class="table-wrap">
+                    <table>
+                        <tr>
+                            <th>Source IP</th>
+                            <th>Last Status</th>
+                            <th>Severity</th>
+                            <th>Packet Rate (10s)</th>
+                            <th>Unique Ports (15s)</th>
+                            <th>Occurrences</th>
+                            <th>Last Seen</th>
+                        </tr>
+
+                        {% for ip in suspicious_ips %}
+                        <tr>
+                            <td>{{ ip.ip }}</td>
+                            <td class="alert">{{ ip.status }}</td>
+                            <td class="
+                                {% if ip.severity == 'CRITICAL' %}
+                                    alert
+                                {% elif ip.severity == 'HIGH' %}
+                                    warning
+                                {% elif ip.severity == 'MEDIUM' %}
+                                    medium
+                                {% else %}
+                                    safe
+                                {% endif %}
+                            ">
+                                {{ ip.severity }}
+                            </td>
+                            <td>{{ ip.packet_rate }}</td>
+                            <td>{{ ip.unique_ports }}</td>
+                            <td>{{ ip.occurrences }}</td>
+                            <td>{{ ip.last_seen }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% else %}
+                <div class="result-box">
+                    No suspicious IP behavior detected yet.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- REAL PACKET MONITOR -->
+        <div class="card" id="packet-monitor">
+            <div class="section-id">[ SECTION // REAL PACKETS ]</div>
+            <h2>Real Packet Monitoring</h2>
+            <p>
+                This module captures real packets from your local network interface using Scapy
+                and performs behavior-based analysis.
+            </p>
+
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Time</th>
+                        <th>Source IP</th>
+                        <th>Destination IP</th>
+                        <th>Protocol</th>
+                        <th>Dst Port</th>
+                        <th>Packet Size</th>
+                        <th>Packet Rate</th>
+                        <th>Unique Ports</th>
+                        <th>Status</th>
+                        <th>Severity</th>
+                    </tr>
+
+                    {% for packet in captured_packets %}
+                    <tr>
+                        <td>{{ packet.time }}</td>
+                        <td>{{ packet.src }}</td>
+                        <td>{{ packet.dst }}</td>
+                        <td>{{ packet.protocol }}</td>
+                        <td>{{ packet.dst_port }}</td>
+                        <td>{{ packet.size }}</td>
+                        <td>{{ packet.packet_rate }}</td>
+                        <td>{{ packet.unique_ports }}</td>
+                        <td class="{% if packet.status == 'SAFE' %}safe{% else %}alert{% endif %}">
+                            {{ packet.status }}
+                        </td>
+                        <td class="
+                            {% if packet.severity == 'CRITICAL' %}
+                                alert
+                            {% elif packet.severity == 'HIGH' %}
+                                warning
+                            {% elif packet.severity == 'MEDIUM' %}
+                                medium
+                            {% else %}
+                                safe
+                            {% endif %}
+                        ">
+                            {{ packet.severity }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div class="card" id="analytics">
+            <div class="section-id">[ SECTION // ANALYTICS ]</div>
+            <h2>Security Analytics</h2>
+
+            <div class="grid-2">
+
+                <div class="chart-box">
+                    <h3>Top Attack Categories</h3>
+                    <img src="{{ url_for('static', filename='attack_chart.png') }}">
+                </div>
+
+                <div class="chart-box">
+                    <h3>Normal vs Attack Traffic</h3>
+                    <img src="{{ url_for('static', filename='pie_chart.png') }}">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="card" id="history">
+            <div class="section-id">[ SECTION // DETECTION HISTORY ]</div>
+            <h2>Database Detection History</h2>
+            <p>
+                These logs are stored permanently in SQLite database and can be used for forensic analysis.
+            </p>
+
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Time</th>
+                        <th>Threat Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                    </tr>
+
+                    {% for item in history %}
+                    <tr>
+                        <td>{{ item.time }}</td>
+                        <td>{{ item.threat }}</td>
+                        <td>{{ item.severity }}</td>
+                        <td class="{% if item.status == 'SAFE' %}safe{% else %}alert{% endif %}">
+                            {{ item.status }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <!-- REPORT -->
+        <div class="card" id="report">
+            <div class="section-id">[ SECTION // FORENSIC REPORT ]</div>
+            <h2>Generate Forensic Security Report</h2>
+            <p>
+                Download a professional PDF report containing recent detections, packet monitoring logs,
+                suspicious IP intelligence, model comparison results, and uploaded file analysis summary.
+            </p>
+
+            <a href="/download_report">
+                <button class="btn">Download PDF Report</button>
+            </a>
+        </div>
+
+        <div class="footer">
+            Final Year Project — Advanced Real-Time AI-Based Intrusion Detection & Threat Intelligence Platform
+        </div>
+
+    </div>
+
+    <script>
+        function updateClock(){
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById("liveClock").textContent = timeString;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+
+</body>
+</html>

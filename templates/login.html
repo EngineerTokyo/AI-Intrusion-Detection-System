@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberCore Login</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            height:100vh;
+            background:#020403;
+            overflow:hidden;
+            font-family:Consolas, "Courier New", monospace;
+            color:#14ff88;
+        }
+
+        /* MATRIX BACKGROUND */
+        canvas{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            z-index:0;
+        }
+
+        .overlay{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:
+                radial-gradient(circle at center, rgba(20,255,136,0.08), transparent 45%),
+                linear-gradient(rgba(0,255,120,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,120,0.04) 1px, transparent 1px);
+            background-size:100% 100%, 35px 35px, 35px 35px;
+            z-index:1;
+            pointer-events:none;
+        }
+
+        .scanline{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(20,255,136,0.06) 50%,
+                transparent 100%
+            );
+            animation:scan 5s linear infinite;
+            z-index:2;
+            pointer-events:none;
+        }
+
+        @keyframes scan{
+            0%{
+                transform:translateY(-100%);
+            }
+
+            100%{
+                transform:translateY(100%);
+            }
+        }
+
+        .main-wrapper{
+            position:relative;
+            z-index:5;
+            height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+
+        .login-container{
+            width:430px;
+            background:rgba(3, 10, 7, 0.92);
+            border:1px solid rgba(20,255,136,0.5);
+            border-radius:20px;
+            padding:38px;
+            box-shadow:
+                0 0 35px rgba(20,255,136,0.25),
+                inset 0 0 22px rgba(20,255,136,0.05);
+            position:relative;
+            overflow:hidden;
+        }
+
+        .login-container::before{
+            content:"";
+            position:absolute;
+            top:0;
+            left:-100%;
+            width:100%;
+            height:2px;
+            background:linear-gradient(90deg, transparent, #14ff88, transparent);
+            animation:borderMove 3s linear infinite;
+        }
+
+        @keyframes borderMove{
+            0%{
+                left:-100%;
+            }
+
+            100%{
+                left:100%;
+            }
+        }
+
+        .system-label{
+            text-align:center;
+            font-size:13px;
+            letter-spacing:3px;
+            color:#7fffd4;
+            margin-bottom:12px;
+        }
+
+        .logo{
+            text-align:center;
+            font-size:34px;
+            font-weight:bold;
+            color:#14ff88;
+            text-shadow:0 0 16px rgba(20,255,136,0.9);
+            margin-bottom:8px;
+        }
+
+        .subtitle{
+            text-align:center;
+            color:#b7ffe0;
+            font-size:13px;
+            line-height:1.6;
+            margin-bottom:30px;
+        }
+
+        .terminal-box{
+            background:#020805;
+            border:1px solid rgba(20,255,136,0.35);
+            border-radius:12px;
+            padding:14px;
+            margin-bottom:25px;
+            color:#9dffc9;
+            font-size:13px;
+            line-height:1.6;
+            box-shadow:inset 0 0 15px rgba(20,255,136,0.06);
+        }
+
+        .terminal-line::before{
+            content:"> ";
+            color:#14ff88;
+        }
+
+        .form-group{
+            margin-bottom:18px;
+        }
+
+        label{
+            display:block;
+            color:#9dffc9;
+            margin-bottom:8px;
+            font-size:14px;
+        }
+
+        input{
+            width:100%;
+            padding:15px;
+            background:#020805;
+            border:1px solid rgba(20,255,136,0.45);
+            border-radius:12px;
+            color:#14ff88;
+            font-size:16px;
+            outline:none;
+            font-family:Consolas, "Courier New", monospace;
+            box-shadow:inset 0 0 12px rgba(20,255,136,0.06);
+        }
+
+        input::placeholder{
+            color:#4c9f74;
+        }
+
+        input:focus{
+            border-color:#14ff88;
+            box-shadow:
+                0 0 15px rgba(20,255,136,0.35),
+                inset 0 0 12px rgba(20,255,136,0.08);
+        }
+
+        button{
+            width:100%;
+            padding:16px;
+            margin-top:12px;
+            border:none;
+            border-radius:12px;
+            background:#14ff88;
+            color:#020805;
+            font-size:17px;
+            font-weight:bold;
+            cursor:pointer;
+            font-family:Consolas, "Courier New", monospace;
+            box-shadow:0 0 22px rgba(20,255,136,0.4);
+            transition:0.25s;
+            letter-spacing:1px;
+        }
+
+        button:hover{
+            background:#7dffba;
+            transform:translateY(-2px);
+            box-shadow:0 0 30px rgba(20,255,136,0.65);
+        }
+
+        .error{
+            margin-top:18px;
+            padding:13px;
+            border-radius:10px;
+            background:#28070f;
+            border:1px solid #ff4d6d;
+            color:#ff9bad;
+            text-align:center;
+            font-size:14px;
+            box-shadow:0 0 18px rgba(255,77,109,0.25);
+        }
+
+        .hint{
+            margin-top:22px;
+            text-align:center;
+            font-size:12px;
+            color:#7fffd4;
+            line-height:1.6;
+        }
+
+        .hint span{
+            color:#14ff88;
+            font-weight:bold;
+        }
+
+        .footer{
+            position:fixed;
+            bottom:15px;
+            width:100%;
+            text-align:center;
+            color:#5fd99b;
+            font-size:12px;
+            z-index:5;
+        }
+
+        .glitch{
+            position:relative;
+        }
+
+        .glitch::before,
+        .glitch::after{
+            content:attr(data-text);
+            position:absolute;
+            left:0;
+            top:0;
+            width:100%;
+            overflow:hidden;
+            color:#14ff88;
+            background:transparent;
+        }
+
+        .glitch::before{
+            left:2px;
+            text-shadow:-2px 0 red;
+            animation:glitch1 2s infinite linear alternate-reverse;
+        }
+
+        .glitch::after{
+            left:-2px;
+            text-shadow:-2px 0 cyan;
+            animation:glitch2 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch1{
+            0%{clip-path:inset(0 0 80% 0);}
+            20%{clip-path:inset(20% 0 50% 0);}
+            40%{clip-path:inset(50% 0 20% 0);}
+            60%{clip-path:inset(10% 0 70% 0);}
+            80%{clip-path:inset(70% 0 10% 0);}
+            100%{clip-path:inset(40% 0 40% 0);}
+        }
+
+        @keyframes glitch2{
+            0%{clip-path:inset(70% 0 10% 0);}
+            20%{clip-path:inset(10% 0 70% 0);}
+            40%{clip-path:inset(30% 0 40% 0);}
+            60%{clip-path:inset(60% 0 20% 0);}
+            80%{clip-path:inset(20% 0 60% 0);}
+            100%{clip-path:inset(80% 0 5% 0);}
+        }
+
+        @media screen and (max-width:500px){
+
+            .login-container{
+                width:100%;
+                padding:28px;
+            }
+
+            .logo{
+                font-size:28px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <canvas id="matrix"></canvas>
+
+    <div class="overlay"></div>
+    <div class="scanline"></div>
+
+    <div class="main-wrapper">
+
+        <div class="login-container">
+
+            <div class="system-label">
+                SECURE ACCESS GATEWAY
+            </div>
+
+            <div class="logo glitch" data-text="CYBER//CORE">
+                CYBER//CORE
+            </div>
+
+            <div class="subtitle">
+                Real-Time AI Intrusion Detection<br>
+                Threat Intelligence Platform
+            </div>
+
+            <div class="terminal-box">
+
+                <div class="terminal-line">
+                    Initializing cyber defense modules...
+                </div>
+
+                <div class="terminal-line">
+                    Packet monitor: active
+                </div>
+
+                <div class="terminal-line">
+                    AI threat engine: standby
+                </div>
+
+                <div class="terminal-line">
+                    Authentication required
+                </div>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="form-group">
+
+                    <label>Username</label>
+
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Enter admin username"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Password</label>
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Enter secure password"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit">
+                    ACCESS SYSTEM
+                </button>
+
+            </form>
+
+            {% if error %}
+
+                <div class="error">
+                    ACCESS DENIED — {{ error }}
+                </div>
+
+            {% endif %}
+
+            <div class="hint">
+                Demo Credentials:<br>
+                Username: <span>admin</span> |
+                Password: <span>admin123</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Final Year Project — AI-Based Intrusion Detection & Threat Classification System
+    </div>
+
+    <script>
+
+        const canvas = document.getElementById("matrix");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&@";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+
+        for(let i = 0; i < columns; i++){
+            drops[i] = 1;
+        }
+
+        function drawMatrix(){
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#14ff88";
+            ctx.font = fontSize + "px Consolas";
+
+            for(let i = 0; i < drops.length; i++){
+
+                const text = letters.charAt(
+                    Math.floor(Math.random() * letters.length)
+                );
+
+                ctx.fillText(
+                    text,
+                    i * fontSize,
+                    drops[i] * fontSize
+                );
+
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975){
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 40);
+
+        window.addEventListener("resize", function(){
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+        });
+
+    </script>
+
+</body>
+
+</html>

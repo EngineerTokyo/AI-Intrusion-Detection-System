@@ -1,0 +1,8 @@
+Flask
+pandas
+numpy
+matplotlib
+scikit-learn
+scapy
+reportlab
+werkzeug
